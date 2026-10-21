@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>SW 혼자 풀기 연습</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one narrow column app, three tabs (연습 · 기록 · 기록지 쓰는 법); colors follow the parent-education deck (sage + navy on warm paper) */
+:root{
+  --bg:#F2EEE8; --surface:#FFFFFF; --soft:#E8F1EC; --line:#D9E0DA;
+  --fg:#2F3C59; --muted:#647086; --accent:#5E8F77; --accent-strong:#46755F; --on-accent:#FFFFFF;
+  --sage:#88B8A0; --warn:#B5533F; --warn-soft:#FBEDE9; --gold:#B88A1E; --gold-soft:#FFF4D6; --blue:#4F6FA8;
+  --f-head:"Gowun Dodum","IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#171B21; --surface:#212731; --soft:#24332C; --line:#343C48;
+  --fg:#E6EAF0; --muted:#9AA4B4; --accent:#8CC2A6; --accent-strong:#A6D6BD; --on-accent:#13201A;
+  --sage:#6E9E86; --warn:#F09A86; --warn-soft:#3A2622; --gold:#E8C266; --gold-soft:#3A321C; --blue:#93AEE0; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#171B21; --surface:#212731; --soft:#24332C; --line:#343C48;
+  --fg:#E6EAF0; --muted:#9AA4B4; --accent:#8CC2A6; --accent-strong:#A6D6BD; --on-accent:#13201A;
+  --sage:#6E9E86; --warn:#F09A86; --warn-soft:#3A2622; --gold:#E8C266; --gold-soft:#3A321C; --blue:#93AEE0; color-scheme:dark}
+*{box-sizing:border-box}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+[hidden]{display:none!important}
+img{max-width:100%}
+body{margin:0;-webkit-text-size-adjust:100%;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{font-family:var(--f-head);font-weight:400;text-wrap:balance;margin:0}
+h1{font-size:1.75rem;line-height:1.25}
+h2{font-size:1.3rem}
+h3{font-size:1.05rem;font-family:var(--f-body);font-weight:600}
+p{margin:0}
+.muted{color:var(--muted)}
+.small{font-size:.85rem}
+header .goal{margin-top:6px;color:var(--muted);font-size:.92rem}
+.goal b{color:var(--fg);font-weight:600}
+
+nav.tabs{display:flex;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:5px;position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.tabs button{flex:1;border:0;background:transparent;color:var(--muted);font:600 .95rem var(--f-body);padding:10px 6px;border-radius:10px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--accent);color:var(--on-accent)}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--sage);outline-offset:2px}
+
+.panel{display:flex;flex-direction:column;gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.card.soft{background:var(--soft);border-color:transparent}
+.row{display:flex;gap:12px;flex-wrap:wrap}
+.row>*{flex:1 1 150px;min-width:0}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:.85rem;color:var(--muted);font-weight:500}
+input[type=text],input[type=date],input[type=number],textarea,select{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+textarea{min-height:64px;resize:vertical}
+
+.checks{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+.checks label{display:flex;gap:8px;align-items:flex-start;font-size:.92rem;cursor:pointer;padding:8px 10px;border-radius:10px;background:var(--bg)}
+.checks input{margin-top:4px;accent-color:var(--accent)}
+
+.timer{display:flex;align-items:center;justify-content:center;gap:22px;flex-wrap:wrap}
+.ring{width:132px;height:132px;flex:none}
+.ring .track{stroke:var(--line)}
+.ring .fill{stroke:var(--warn);transition:stroke-dashoffset .4s linear}
+.clockbox{text-align:center;min-width:0}
+.clock{font-variant-numeric:tabular-nums;font-size:clamp(2.8rem,13vw,4.2rem);font-weight:600;letter-spacing:.02em;line-height:1.05}
+.clock.over{color:var(--warn)}
+.clock-sub{color:var(--muted);font-size:.9rem}
+.marks{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mark{background:var(--bg);border-radius:12px;padding:10px;text-align:center;min-width:0}
+.mark .k{font-size:.78rem;color:var(--muted)}
+.mark .v{font-variant-numeric:tabular-nums;font-weight:600;font-size:1.15rem}
+.mark.on{background:var(--soft)}
+.mark.alert.on{background:var(--warn-soft)}
+.mark.alert.on .v{color:var(--warn)}
+
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{font:600 1rem var(--f-body);border-radius:14px;padding:14px 12px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;min-height:56px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.primary{background:var(--accent);color:var(--on-accent);border-color:transparent}
+.btn.big{grid-column:1/-1;font-size:1.15rem;padding:20px}
+.btn.warn{color:var(--warn);border-color:var(--warn)}
+.btn.help{color:var(--blue);border-color:var(--blue)}
+.btn.ghost{background:transparent}
+.btn.sm{min-height:0;padding:8px 12px;font-size:.88rem;border-radius:10px}
+.btn .cnt{display:inline-block;min-width:1.8em;margin-left:6px;padding:0 6px;border-radius:999px;background:var(--bg);font-variant-numeric:tabular-nums}
+.linkbtn{background:none;border:0;color:var(--accent-strong);font:600 .9rem var(--f-body);cursor:pointer;padding:4px 0;text-decoration:underline;text-underline-offset:3px;align-self:center}
+
+.tip{border-radius:12px;padding:12px 14px;background:var(--soft);display:flex;flex-direction:column;gap:2px}
+.tip .t{font-weight:600;font-size:.88rem;color:var(--accent-strong)}
+.tip.gold{background:var(--gold-soft)}
+.tip.gold .t{color:var(--gold)}
+.notice{border-radius:12px;padding:10px 14px;background:var(--warn-soft);color:var(--warn);font-size:.9rem}
+.ok{color:var(--accent-strong);font-weight:600}
+
+.stepper{display:flex;align-items:center;gap:6px}
+.stepper button{width:44px;height:44px;flex:none;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:600 1.2rem var(--f-body);cursor:pointer}
+.stepper input{text-align:center}
+
+.chart{width:100%;height:auto;display:block}
+.chart text{fill:var(--muted);font:17px var(--f-body)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.85rem;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.empty{padding:22px;text-align:center;color:var(--muted);background:var(--bg);border-radius:12px}
+
+.tbl-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;font-size:.9rem;font-variant-numeric:tabular-nums}
+th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;white-space:nowrap}
+td.memo{white-space:normal;min-width:140px}
+th{background:var(--soft);font-weight:600;font-size:.82rem;color:var(--fg)}
+tr:last-child td{border-bottom:0}
+.pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:.78rem;font-weight:600}
+.pill.y{background:var(--soft);color:var(--accent-strong)}
+.pill.n{background:var(--warn-soft);color:var(--warn)}
+.pill.x{background:var(--bg);color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px}
+.stat .k{font-size:.8rem;color:var(--muted)}
+.stat .v{font-size:1.4rem;font-weight:600;font-variant-numeric:tabular-nums}
+
+/* guide */
+ol.steps{margin:0;padding:0;list-style:none;counter-reset:s;display:flex;flex-direction:column;gap:12px}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:32px 1fr;gap:10px;align-items:start}
+ol.steps li::before{content:counter(s);width:32px;height:32px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;font-weight:700}
+ol.steps b{font-weight:600}
+dl.defs{margin:0;display:grid;gap:10px}
+dl.defs div{background:var(--bg);border-radius:12px;padding:12px 14px}
+dl.defs dt{font-weight:600}
+dl.defs dd{margin:4px 0 0;color:var(--fg)}
+dl.defs .ex{display:block;color:var(--muted);font-size:.85rem;margin-top:4px}
+.guide-tbl td{white-space:normal;min-width:110px}
+.guide-tbl td.avoid{color:var(--warn)}
+details{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 18px}
+details>summary{cursor:pointer;font-weight:600;list-style-position:outside}
+details[open]>summary{margin-bottom:12px}
+@media (max-width:420px){.btns{grid-template-columns:1fr}.marks{gap:6px}.mark .v{font-size:1rem}.ring{width:104px;height:104px}}
+.copybox{width:100%;min-height:180px;font:13px/1.5 var(--f-body);white-space:pre-wrap}
+.weeknav{display:flex;align-items:center;gap:8px}
+.weeknav b{flex:1;text-align:center;font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>SW 혼자 풀기 연습</h1>
+    <p class="goal">목표: <b>한 번의 지시로 교재 여러 쪽을 10분 안에 끝까지 풀기</b></p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="화면 선택">
+    <button role="tab" id="tab-practice" aria-selected="true" data-view="practice">오늘 연습</button>
+    <button role="tab" id="tab-records" aria-selected="false" data-view="records">기록 보기</button>
+    <button role="tab" id="tab-guide" aria-selected="false" data-view="guide">기록 방법</button>
+  </nav>
+
+  <!-- PRACTICE -->
+  <section class="panel" id="view-practice" role="tabpanel" aria-labelledby="tab-practice">
+    <div class="notice" id="kakao-note" hidden>카카오톡 안에서 열려 있어요. 기록이 사라지지 않도록 오른쪽 위 메뉴에서 <b>다른 브라우저로 열기</b>를 눌러 크롬이나 사파리로 열어 주세요. 열고 나서 <b>홈 화면에 추가</b>해 두면 편해요.</div>
+    <div class="notice" id="ro-note" hidden>이 브라우저에서는 기록이 저장되지 않아요. 사생활 보호(시크릿) 모드를 끄거나 크롬·사파리 기본 모드로 열어 주세요.</div>
+
+    <div class="card" id="setup-card">
+      <h2>1. 준비하기</h2>
+      <div class="row">
+        <label class="f">날짜<input type="date" id="f-date"></label>
+        <label class="f">타이머 (분)<input type="number" id="f-goal" min="1" max="60" inputmode="numeric" value="10"></label>
+      </div>
+      <label class="f">과제 · 범위<input type="text" id="f-task" placeholder="예: 수학 12~15쪽" maxlength="60"></label>
+      <div class="checks" aria-label="시작 전 체크">
+        <label><input type="checkbox" id="c1"> 책상에 교재 1권과 필통만</label>
+        <label><input type="checkbox" id="c2"> 화이트보드에 범위 적기</label>
+        <label><input type="checkbox" id="c3"> 보상 판 보며 "10분 안에 다 하면 보너스" 안내</label>
+      </div>
+      <div class="tip"><span class="t">지시는 한 번, 선생님 말투로</span><span id="say">"수학책 12쪽부터 15쪽까지 풀고 있어."</span></div>
+    </div>
+
+    <div class="card" id="run-card">
+      <h2>2. 시간 재기</h2>
+      <div class="timer">
+        <svg class="ring" viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="track" cx="60" cy="60" r="52" fill="none" stroke-width="12"/>
+          <circle class="fill" id="ring" cx="60" cy="60" r="52" fill="none" stroke-width="12" stroke-linecap="round" transform="rotate(-90 60 60)" stroke-dasharray="326.73" stroke-dashoffset="0"/>
+        </svg>
+        <div class="clockbox">
+          <div class="clock" id="clock">10:00</div>
+          <p class="clock-sub" id="clock-sub">'지시했어요'를 누르면 타이머가 시작돼요</p>
+        </div>
+      </div>
+      <div class="marks">
+        <div class="mark" id="m-start"><div class="k">지시 → 시작</div><div class="v">–</div></div>
+        <div class="mark alert" id="m-leave"><div class="k">지시 → 첫 이탈</div><div class="v">–</div></div>
+        <div class="mark" id="m-end"><div class="k">지시 → 완수</div><div class="v">–</div></div>
+      </div>
+      <div id="half-note" class="tip gold" hidden><span class="t">절반 지점이에요</span><span>지나가며 "5분 남았어, ○쪽 남았어." 한마디만 하고 다시 떨어져요.</span></div>
+      <div id="over-note" class="notice" hidden>10분이 지났어요. 끝까지 하면 '다 했어요'를 눌러 주세요. 완수로 기록되고, 시간 초과로 표시돼요.</div>
+      <div class="btns" id="btns">
+        <button class="btn primary big" id="b-instruct">지시했어요</button>
+        <button class="btn" id="b-start" hidden>시작했어요</button>
+        <button class="btn primary" id="b-done" hidden>다 했어요</button>
+        <button class="btn help" id="b-help" hidden>도움 요청 <span class="cnt" id="n-help">0</span></button>
+        <button class="btn warn" id="b-leave" hidden>거부·이탈 <span class="cnt" id="n-leave">0</span></button>
+        <button class="btn ghost big" id="b-stop" hidden>중단 (미완수)</button>
+      </div>
+      <div class="tip" id="phase-tip" hidden><span class="t" id="phase-t"></span><span id="phase-d"></span></div>
+      <button class="linkbtn" id="b-manual">타이머 없이 직접 입력하기</button>
+    </div>
+
+    <div class="card" id="save-card" hidden>
+      <h2>3. 기록 저장</h2>
+      <p class="muted small">시간은 "분:초"로 고칠 수 있어요. 이탈이 없었다면 비워 두세요.</p>
+      <div class="row">
+        <label class="f">지시 → 시작<input type="text" id="e-start" placeholder="분:초" inputmode="numeric"></label>
+        <label class="f">지시 → 첫 이탈<input type="text" id="e-leave" placeholder="없음" inputmode="numeric"></label>
+        <label class="f">지시 → 완수<input type="text" id="e-total" placeholder="미완수면 비움" inputmode="numeric"></label>
+      </div>
+      <div class="row">
+        <label class="f">과제 완수 여부
+          <select id="e-done"><option value="yes">완수</option><option value="no">미완수</option></select>
+        </label>
+        <div class="f"><label class="f" for="e-help">도움 요청 횟수</label>
+          <div class="stepper"><button type="button" data-step="e-help:-1" aria-label="도움 요청 줄이기">−</button><input type="number" id="e-help" min="0" max="99" value="0" inputmode="numeric"><button type="button" data-step="e-help:1" aria-label="도움 요청 늘리기">+</button></div></div>
+        <div class="f"><label class="f" for="e-refuse">거부·이탈 횟수</label>
+          <div class="stepper"><button type="button" data-step="e-refuse:-1" aria-label="거부·이탈 줄이기">−</button><input type="number" id="e-refuse" min="0" max="99" value="0" inputmode="numeric"><button type="button" data-step="e-refuse:1" aria-label="거부·이탈 늘리기">+</button></div></div>
+      </div>
+      <label class="f">메모 (어려웠던 점, 도와준 방법 등)<textarea id="e-memo" maxlength="300" placeholder="예: 첫 문제 함께 풂, 13쪽에서 '모르겠어요' 하고 일어남"></textarea></label>
+      <p class="small" id="save-msg" aria-live="polite"></p>
+      <div class="btns">
+        <button class="btn primary" id="b-save">기록 저장</button>
+        <button class="btn ghost" id="b-reset">새로 시작</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- RECORDS -->
+  <section class="panel" id="view-records" role="tabpanel" aria-labelledby="tab-records" hidden>
+    <div class="card soft">
+      <h3>선생님께 보내기</h3>
+      <div class="weeknav"><button class="btn sm" id="w-prev" aria-label="지난주">◀ 지난주</button><b id="w-label"></b><button class="btn sm" id="w-next" aria-label="다음 주">다음 주 ▶</button></div>
+      <button class="btn primary" id="b-copy">이번 주 기록 복사</button>
+      <p class="small" id="copy-msg" aria-live="polite">복사한 뒤 카톡 대화창에 붙여넣기 해서 보내 주세요.</p>
+      <textarea class="copybox" id="copy-text" readonly aria-label="복사될 내용"></textarea>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div class="card">
+      <h3>지시 후 시작까지 걸린 시간</h3>
+      <p class="muted small">짧아질수록 지시를 듣고 바로 시작한다는 뜻이에요.</p>
+      <div id="chart1"></div>
+    </div>
+    <div class="card">
+      <h3>완수까지 걸린 시간</h3>
+      <p class="muted small">점선이 10분 목표선이에요. 선 아래면 시간 안에 끝낸 거예요.</p>
+      <div id="chart2"></div>
+    </div>
+    <div class="card">
+      <h3>도움 요청 · 거부·이탈 횟수</h3>
+      <div class="legend"><span><i style="background:var(--blue)"></i>도움 요청</span><span><i style="background:var(--warn)"></i>거부·이탈</span></div>
+      <p class="muted small">도움 요청은 적절히 유지되고, 거부·이탈은 줄어드는 게 좋은 흐름이에요.</p>
+      <div id="chart3"></div>
+    </div>
+    <div class="card">
+      <h3>전체 기록</h3>
+      <div id="table"></div>
+    </div>
+  </section>
+
+  <!-- GUIDE -->
+  <section class="panel" id="view-guide" role="tabpanel" aria-labelledby="tab-guide" hidden>
+    <div class="card">
+      <h2>이렇게 기록해요</h2>
+      <ol class="steps">
+        <li><div><b>준비하기</b>에서 날짜와 과제·범위를 적어요. 타이머는 10분으로 맞춰져 있어요.</div></li>
+        <li><div>지시를 말한 순간 <b>지시했어요</b>를 눌러요. 10분 타이머가 시작돼요.</div></li>
+        <li><div>연필을 들고 첫 문제를 풀기 시작하면 <b>시작했어요</b>를 눌러요.</div></li>
+        <li><div>도움을 청할 때마다 <b>도움 요청</b>을, 거부하거나 자리를 떠날 때마다 <b>거부·이탈</b>을 눌러요. 처음 누른 시간이 '첫 이탈'로 기록돼요.</div></li>
+        <li><div>"다 했어요"라고 하면 <b>다 했어요</b>를 눌러요. 끝까지 못 하고 그만두면 <b>중단</b>을 눌러요.</div></li>
+        <li><div>숫자를 확인하고, 메모를 한 줄 남긴 뒤 <b>기록 저장</b>을 눌러요.</div></li>
+        <li><div>주말에 <b>기록 보기 → 이번 주 기록 복사</b>를 눌러 카톡으로 선생님께 보내 주세요.</div></li>
+      </ol>
+      <p class="small muted">기록은 이 휴대폰에만 저장돼요. 브라우저 기록을 지우면 함께 지워지니, 매주 카톡으로 보내 두세요. 타이머를 못 켰다면 '타이머 없이 직접 입력하기'로 나중에 적어도 돼요.</p>
+    </div>
+
+    <div class="card">
+      <h2>이럴 때 이렇게 세요</h2>
+      <dl class="defs">
+        <div><dt>시작</dt><dd>연필을 들고 첫 문제를 풀기 시작한 순간이에요.</dd><span class="ex">교재를 펴기만 하거나 연필을 만지작거리는 건 아직 시작이 아니에요.</span></div>
+        <div><dt>도움 요청 (1회씩)</dt><dd>"도와주세요", "모르겠어요"라고 말하거나 손을 들어 도움을 청한 횟수예요.</dd><span class="ex">어른이 먼저 다가가서 도와준 건 세지 않고 메모에 적어요.</span></div>
+        <div><dt>거부·이탈 (1회씩)</dt><dd>"안 할래", 교재 덮기·밀기, 자리에서 일어나기, 다른 놀이 하기를 세요.</dd><span class="ex">한 번 일어나서 돌아오기까지는 1회예요. 다시 앉았다가 또 일어나면 2회예요.</span></div>
+        <div><dt>과제 완수 여부</dt><dd>지시한 범위를 끝까지 풀었으면 '완수'예요.</dd><span class="ex">10분을 넘겼어도 끝까지 했으면 완수예요. 시간 초과는 따로 표시돼요.</span></div>
+        <div><dt>메모</dt><dd>어른이 도와준 방법, 어려워한 문제, 그날 컨디션을 한 줄로 적어요.</dd><span class="ex">예: 첫 문제 함께 풂 / 14쪽 서술형에서 일어남 / 늦잠 자서 피곤해함</span></div>
+      </dl>
+    </div>
+
+    <div class="card soft">
+      <h3>기록 보는 법</h3>
+      <ol class="steps">
+        <li><div><b>시작까지 걸린 시간</b>이 짧아지는지 봐요. 학교에서 "안 푸는" 행동과 가장 가까운 숫자예요.</div></li>
+        <li><div><b>완수까지 걸린 시간</b>이 10분 점선 아래에 머무는지 봐요.</div></li>
+        <li><div><b>3회 연속 10분 안에 완수</b>하면 선생님과 상의해 지원 하나(분량, 어른 거리 등)를 줄여요.</div></li>
+        <li><div><b>거부·이탈이 늘면</b> 분량이나 난도를 낮추고, 메모에 이유를 적어 선생님께 알려 주세요.</div></li>
+      </ol>
+    </div>
+
+    <details>
+      <summary>연습 중 이럴 땐 이렇게</summary>
+      <div class="tbl-wrap"><table class="guide-tbl">
+        <thead><tr><th>이럴 때</th><th>이렇게 해요</th><th>피해요</th></tr></thead>
+        <tbody>
+          <tr><td><b>시작을 안 해요</b></td><td>초반엔 첫 1~2문제 함께 풀어요. 점점 첫 문제를 가리키기만 해요.</td><td class="avoid">끝까지 옆에서 같이 풀기</td></tr>
+          <tr><td><b>막혔는데 말을 안 해요</b></td><td>"모르면 '도와주세요' 하면 돼." 한 번만 알려줘요.</td><td class="avoid">먼저 답 알려주기</td></tr>
+          <tr><td><b>도움을 요청했어요</b></td><td>바로 가서 "잘 말했어!" 칭찬하고 힌트는 하나만 줘요.</td><td class="avoid">대신 풀어주기</td></tr>
+          <tr><td><b>5분 지점이에요</b></td><td>"5분 남았어, 두 쪽 남았어." 하고 다시 떨어져요.</td><td class="avoid">재촉, 잔소리, 옆에 머무르기</td></tr>
+          <tr><td><b>거부하거나 자리를 떠요</b></td><td>짧게 "자리에서 하자." 한 번 말하고 기다려요.</td><td class="avoid">따라다니며 설득하기</td></tr>
+          <tr><td><b>"다 했어요" 했어요</b></td><td>바로 확인하고 칭찬한 뒤 보상을 줘요. 10분 안이면 보너스도 줘요.</td><td class="avoid">그 자리에서 과제 추가</td></tr>
+        </tbody>
+      </table></div>
+    </details>
+  </section>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const LS = 'sw-run-v2';
+  const ls = {
+    get(){ try { return JSON.parse(localStorage.getItem(LS) || 'null'); } catch { return null; } },
+    set(v){ try { localStorage.setItem(LS, JSON.stringify(v)); } catch {} },
+    del(){ try { localStorage.removeItem(LS); } catch {} }
+  };
+  const pad = (n) => String(n).padStart(2, '0');
+  const fmt = (s) => (s == null || isNaN(s)) ? '–' : `${Math.floor(s / 60)}:${pad(Math.round(s % 60))}`;
+  const parseMS = (str) => {
+    str = (str || '').trim(); if (!str) return null;
+    let m = str.match(/^(\d{1,3})\s*[:분]\s*(\d{1,2})\s*초?$/); if (m) return (+m[1]) * 60 + (+m[2]);
+    m = str.match(/^(\d{1,3})\s*분?$/); if (m) return (+m[1]) * 60;
+    m = str.match(/^(\d{1,3})\s*초$/); if (m) return +m[1];
+    return NaN;
+  };
+  const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+  const md = (s) => s ? `${+s.slice(5, 7)}/${+s.slice(8, 10)}` : '';
+  const int = (v) => { const n = parseInt(v, 10); return isNaN(n) || n < 0 ? 0 : Math.min(n, 99); };
+
+  // tabs
+  const views = ['practice', 'records', 'guide'];
+  function show(v){
+    if (!views.includes(v)) v = 'practice';
+    views.forEach(x => { $('view-' + x).hidden = x !== v; $('tab-' + x).setAttribute('aria-selected', x === v); });
+  }
+  document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => { show(b.dataset.view); try { history.replaceState(null, '', '#' + b.dataset.view); } catch {} }));
+  show((location.hash || '').slice(1));
+
+  // practice
+  $('f-date').value = todayStr();
+  let run = ls.get(); // {t0, goal, start, leave, end, done, help, refuse}
+  let tick = null, wake = null, audio = null, manual = false;
+  const CIRC = 326.73;
+
+  $('f-task').addEventListener('input', () => {
+    const t = $('f-task').value.trim();
+    $('say').textContent = t ? `"${t}까지 풀고 있어."` : '"수학책 12쪽부터 15쪽까지 풀고 있어."';
+  });
+  const goalSec = () => { const g = parseFloat($('f-goal').value); return (g > 0 ? g : 10) * 60; };
+  $('f-goal').addEventListener('input', () => { if (!run) idleClock(); });
+  const rel = (t) => (run && t != null) ? (t - run.t0) / 1000 : null;
+
+  function idleClock(){ $('clock').textContent = fmt(goalSec()); $('clock').classList.remove('over'); $('ring').style.strokeDashoffset = 0; }
+  function setTip(t, d){ $('phase-tip').hidden = !t; $('phase-t').textContent = t || ''; $('phase-d').textContent = d || ''; }
+
+  function render(){
+    const r = run, running = r && r.end == null;
+    $('b-instruct').hidden = !!r;
+    ['b-start', 'b-leave', 'b-help', 'b-done', 'b-stop'].forEach(id => $(id).hidden = !running);
+    if (running) $('b-start').disabled = r.start != null;
+    $('n-help').textContent = r ? r.help : 0;
+    $('n-leave').textContent = r ? r.refuse : 0;
+    const setMark = (id, v) => { const el = $(id); el.querySelector('.v').textContent = fmt(v); el.classList.toggle('on', v != null); };
+    setMark('m-start', rel(r && r.start));
+    setMark('m-leave', rel(r && r.leave));
+    setMark('m-end', r && r.done ? rel(r.end) : null);
+    if (!r){ idleClock(); $('clock-sub').textContent = "'지시했어요'를 누르면 타이머가 시작돼요"; setTip(); $('half-note').hidden = true; $('over-note').hidden = true; }
+    else if (running){
+      if (r.start == null) setTip('시작을 안 하면', '초반엔 첫 1~2문제 함께 풀어요. 점점 첫 문제를 가리키기만 해요.');
+      else if (r.refuse > 0) setTip('거부하거나 자리를 떠났다면', '짧게 "자리에서 하자." 한 번 말하고 기다려요. 따라다니며 설득하지 않아요.');
+      else setTip('푸는 중이에요', '도움을 요청하면 바로 가서 칭찬하고 힌트는 하나만 줘요.');
+    } else {
+      $('half-note').hidden = true; $('over-note').hidden = true;
+      setTip(r.done ? '다 했어요!' : '중단했어요', r.done ? '바로 확인하고 칭찬한 뒤 보상을 줘요. 10분 안이면 보너스도 줘요.' : '어려웠던 점을 메모해 두면 다음 분량과 난도를 정할 때 도움이 돼요.');
+    }
+    $('save-card').hidden = !(r && r.end != null) && !manual;
+  }
+
+  function beep(){
+    try {
+      if (!audio) return;
+      const t = audio.currentTime;
+      [0, 0.35, 0.7].forEach(d => { const o = audio.createOscillator(), g = audio.createGain(); o.frequency.value = 880; g.gain.setValueAtTime(0.0001, t + d); g.gain.exponentialRampToValueAtTime(0.25, t + d + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + d + 0.25); o.connect(g).connect(audio.destination); o.start(t + d); o.stop(t + d + 0.3); });
+    } catch {}
+  }
+
+  function loop(){
+    if (!run || run.end == null){ /* running */ }
+    if (!run) return;
+    const now = run.end != null ? run.end : Date.now();
+    const s = (now - run.t0) / 1000, g = run.goal, left = g - s;
+    $('clock').textContent = left >= 0 ? fmt(Math.ceil(left)) : '+' + fmt(Math.floor(-left));
+    $('clock').classList.toggle('over', left < 0);
+    $('ring').style.strokeDashoffset = String(CIRC * Math.min(1, s / g));
+    if (run.end != null){ clearInterval(tick); tick = null; return; }
+    $('clock-sub').textContent = `지시 후 ${fmt(Math.floor(s))} 지남`;
+    if (!run.half && s >= g / 2){ run.half = true; ls.set(run); $('half-note').hidden = false; }
+    if (left < 0){ $('half-note').hidden = true; $('over-note').hidden = false; if (!run.rang){ run.rang = true; ls.set(run); beep(); } }
+  }
+  function startLoop(){ if (!tick){ loop(); tick = setInterval(loop, 500); } }
+  async function lockScreen(){ try { if ('wakeLock' in navigator) wake = await navigator.wakeLock.request('screen'); } catch {} }
+  function unlockScreen(){ try { wake && wake.release(); } catch {} wake = null; }
+
+  function fillSave(){
+    $('e-start').value = run && run.start != null ? fmt(Math.round(rel(run.start))) : '';
+    $('e-leave').value = run && run.leave != null ? fmt(Math.round(rel(run.leave))) : '';
+    $('e-total').value = run && run.done ? fmt(Math.round(rel(run.end))) : '';
+    $('e-done').value = run && !run.done ? 'no' : 'yes';
+    $('e-help').value = run ? run.help : 0;
+    $('e-refuse').value = run ? run.refuse : 0;
+    $('save-msg').textContent = '';
+  }
+
+  $('b-instruct').onclick = () => {
+    try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); audio.resume && audio.resume(); } catch {}
+    run = { t0: Date.now(), goal: goalSec(), start: null, leave: null, end: null, done: false, help: 0, refuse: 0 };
+    manual = false; ls.set(run); lockScreen(); startLoop(); render();
+  };
+  $('b-start').onclick = () => { if (run.start == null){ run.start = Date.now(); ls.set(run); render(); } };
+  $('b-help').onclick = () => { run.help++; ls.set(run); render(); };
+  $('b-leave').onclick = () => { run.refuse++; if (run.leave == null) run.leave = Date.now(); ls.set(run); render(); };
+  function finish(done){
+    run.end = Date.now(); run.done = done; ls.set(run); unlockScreen(); loop();
+    $('clock-sub').textContent = done ? `완수! 지시 후 ${fmt(Math.round(rel(run.end)))}` : '미완수로 끝냈어요';
+    fillSave(); render();
+    $('save-card').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+  }
+  $('b-done').onclick = () => finish(true);
+  $('b-stop').onclick = () => finish(false);
+  $('b-manual').onclick = () => { manual = true; fillSave(); render(); $('e-start').focus(); };
+  $('b-reset').onclick = resetRun;
+  document.querySelectorAll('[data-step]').forEach(b => b.addEventListener('click', () => { const [id, d] = b.dataset.step.split(':'); $(id).value = int(int($(id).value) + +d); }));
+  $('e-total').addEventListener('change', () => { const t = parseMS($('e-total').value); if (t != null && !isNaN(t)) $('e-done').value = 'yes'; });
+  function resetRun(){ run = null; manual = false; ls.del(); unlockScreen(); ['e-start', 'e-leave', 'e-total', 'e-memo'].forEach(id => $(id).value = ''); render(); }
+
+  if (run){ startLoop(); if (run.end != null){ fillSave(); $('clock-sub').textContent = run.done ? `완수! 지시 후 ${fmt(Math.round(rel(run.end)))}` : '미완수로 끝냈어요'; } }
+  render();
+
+  // data (stored only in this browser)
+  const RK = 'sw-records-v1';
+  let canWrite = true, rows = [];
+  try { const t = '__t'; localStorage.setItem(t, '1'); localStorage.removeItem(t); } catch { canWrite = false; $('ro-note').hidden = false; }
+  if (/KAKAOTALK/i.test(navigator.userAgent)) $('kakao-note').hidden = false;
+  try { rows = JSON.parse(localStorage.getItem(RK) || '[]'); if (!Array.isArray(rows)) rows = []; } catch { rows = []; }
+  const saveRows = () => { try { localStorage.setItem(RK, JSON.stringify(rows)); return true; } catch { return false; } };
+  const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+  $('b-save').onclick = () => {
+    const msg = $('save-msg');
+    const s = parseMS($('e-start').value), l = parseMS($('e-leave').value), t = parseMS($('e-total').value);
+    if ([s, l, t].some(v => Number.isNaN(v))){ msg.textContent = '시간은 "2:15"처럼 분:초로 적어 주세요.'; return; }
+    const task = $('f-task').value.trim();
+    if (!task){ msg.textContent = '준비하기에서 과제·범위를 적어 주세요.'; $('f-task').focus(); return; }
+    const g = run ? run.goal : goalSec();
+    const completed = $('e-done').value === 'yes';
+    const doc = {
+      _id: newId(), date: $('f-date').value || todayStr(), task, goalMin: g / 60,
+      startSec: s, leaveSec: l, totalSec: completed ? t : null,
+      completed, inTime: completed && t != null ? t <= g : (completed ? null : false),
+      helpCount: int($('e-help').value), refuseCount: int($('e-refuse').value),
+      memo: $('e-memo').value.trim(), createdAt: Date.now()
+    };
+    rows.push(doc);
+    if (!saveRows()){ rows.pop(); msg.textContent = '저장하지 못했어요. 크롬이나 사파리 기본 모드로 열어 주세요.'; return; }
+    msg.innerHTML = '<span class="ok">저장했어요.</span> 기록 보기에서 확인하고 복사할 수 있어요.';
+    weekOffset = 0; renderRecords();
+    setTimeout(resetRun, 1200);
+  };
+
+  // week helpers (Mon–Sun)
+  let weekOffset = 0;
+  const DOW = ['일', '월', '화', '수', '목', '금', '토'];
+  const toStr = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const mdw = (str) => { const d = new Date(str + 'T00:00:00'); return `${d.getMonth() + 1}/${d.getDate()}(${DOW[d.getDay()]})`; };
+  function weekRange(off){
+    const d = new Date(); d.setHours(0, 0, 0, 0);
+    const mon = new Date(d); mon.setDate(d.getDate() - ((d.getDay() + 6) % 7) + off * 7);
+    const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+    return [toStr(mon), toStr(sun)];
+  }
+  const resultText = (r) => !r.completed ? '미완수' : r.inTime === true ? '10분 안 완수' : r.inTime === false ? '완수(시간 초과)' : '완수';
+  function weekText(){
+    const [a, b] = weekRange(weekOffset);
+    const list = rows.filter(r => r.date >= a && r.date <= b).sort((x, y) => x.date.localeCompare(y.date) || x.createdAt - y.createdAt);
+    $('w-label').textContent = `${mdw(a)} ~ ${mdw(b)}`;
+    $('b-copy').textContent = weekOffset === 0 ? '이번 주 기록 복사' : '이 주 기록 복사';
+    $('w-next').disabled = weekOffset >= 0;
+    if (!list.length) return '';
+    const avg = (arr) => { const v = arr.filter(x => x != null); return v.length ? v.reduce((p, c) => p + c, 0) / v.length : null; };
+    const lines = [`[SW 혼자 풀기] ${mdw(a)}~${mdw(b)} 기록 (${list.length}회)`, ''];
+    list.forEach((r, k) => {
+      lines.push(`${k + 1}) ${mdw(r.date)} ${r.task}`);
+      lines.push(`지시→시작 ${fmt(r.startSec)} / 첫 이탈 ${r.leaveSec == null ? '없음' : fmt(r.leaveSec)} / 완수 ${fmt(r.totalSec)}`);
+      lines.push(`도움 요청 ${r.helpCount ?? 0}회 / 거부·이탈 ${r.refuseCount ?? 0}회 / ${resultText(r)}`);
+      if (r.memo) lines.push(`메모: ${r.memo}`);
+      lines.push('');
+    });
+    const inTime = list.filter(r => r.inTime === true).length;
+    const ar = avg(list.map(r => r.refuseCount));
+    lines.push(`▶ 10분 안 완수 ${inTime}/${list.length}회 · 평균 시작까지 ${fmt(avg(list.map(r => r.startSec)))} · 평균 거부·이탈 ${ar == null ? '–' : (+ar.toFixed(1)) + '회'}`);
+    return lines.join('\n');
+  }
+  function renderCopy(){
+    const t = weekText();
+    $('copy-text').value = t || '이 주에는 저장된 기록이 없어요.';
+    $('b-copy').disabled = !t;
+  }
+  $('w-prev').onclick = () => { weekOffset--; renderCopy(); };
+  $('w-next').onclick = () => { if (weekOffset < 0){ weekOffset++; renderCopy(); } };
+  $('b-copy').onclick = async () => {
+    const t = weekText(); if (!t) return;
+    const msg = $('copy-msg');
+    const fallback = () => { const ta = $('copy-text'); ta.focus(); ta.select(); let ok = false; try { ok = document.execCommand('copy'); } catch {} msg.innerHTML = ok ? '<span class="ok">복사했어요.</span> 카톡 대화창에 붙여넣기 해 주세요.' : '아래 글을 길게 눌러 전체 선택 후 복사해 주세요.'; };
+    try { await navigator.clipboard.writeText(t); msg.innerHTML = '<span class="ok">복사했어요.</span> 카톡 대화창에 붙여넣기 해 주세요.'; }
+    catch { fallback(); }
+  };
+
+  function renderRecords(){
+    renderCopy();
+    const sorted = rows.slice().sort((a, b) => (a.date || '').localeCompare(b.date || '') || (a.createdAt || 0) - (b.createdAt || 0));
+    const last = sorted.slice(-5);
+    const avg = (arr) => { const v = arr.filter(x => x != null); return v.length ? v.reduce((p, c) => p + c, 0) / v.length : null; };
+    let streak = 0; for (let i = sorted.length - 1; i >= 0; i--){ if (sorted[i].completed && sorted[i].inTime === true) streak++; else break; }
+    const avgRef = avg(last.map(r => r.refuseCount));
+    $('stats').innerHTML = `
+      <div class="stat"><div class="k">전체 기록</div><div class="v">${sorted.length}회</div></div>
+      <div class="stat"><div class="k">최근 5회 평균 · 시작까지</div><div class="v">${fmt(avg(last.map(r => r.startSec)))}</div></div>
+      <div class="stat"><div class="k">최근 5회 평균 · 거부·이탈</div><div class="v">${avgRef == null ? '–' : (+avgRef.toFixed(1)) + '회'}</div></div>
+      <div class="stat"><div class="k">연속 10분 안 완수</div><div class="v">${streak}회</div></div>`;
+    const none = '<div class="empty">첫 기록을 저장하면 여기에 그래프가 그려져요.</div>';
+    const goalMin = sorted.length ? (sorted[sorted.length - 1].goalMin || 10) : 10;
+    $('chart1').innerHTML = sorted.length ? chart(sorted, [{ key: 'startSec', color: 'var(--fg)' }], 'sec') : none;
+    $('chart2').innerHTML = sorted.length ? chart(sorted, [{ key: 'totalSec', color: 'var(--accent)' }], 'min', goalMin) : none;
+    $('chart3').innerHTML = sorted.length ? chart(sorted, [{ key: 'helpCount', color: 'var(--blue)' }, { key: 'refuseCount', color: 'var(--warn)' }], 'cnt') : none;
+    if (!sorted.length){ $('table').innerHTML = none; return; }
+    const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const pill = (r) => !r.completed ? '<span class="pill n">미완수</span>' : r.inTime === true ? '<span class="pill y">10분 안 완수</span>' : r.inTime === false ? '<span class="pill n">완수 · 시간 초과</span>' : '<span class="pill x">완수</span>';
+    const cnt = (v) => v == null ? '–' : v + '회';
+    $('table').innerHTML = `<div class="tbl-wrap"><table>
+      <thead><tr><th>날짜</th><th>과제 · 범위</th><th>지시→시작</th><th>지시→첫 이탈</th><th>지시→완수</th><th>도움 요청</th><th>거부·이탈</th><th>완수 여부</th><th>메모</th><th></th></tr></thead>
+      <tbody>${sorted.slice().reverse().map(r => `<tr>
+        <td>${md(r.date)}</td><td>${esc(r.task)}</td>
+        <td>${fmt(r.startSec)}</td><td>${r.leaveSec == null ? '<span class="muted">없음</span>' : fmt(r.leaveSec)}</td><td>${fmt(r.totalSec)}</td>
+        <td>${cnt(r.helpCount)}</td><td>${cnt(r.refuseCount)}</td>
+        <td>${pill(r)}</td><td class="memo">${esc(r.memo)}</td>
+        <td>${canWrite ? `<button class="btn sm ghost" data-del="${esc(r._id)}">삭제</button>` : ''}</td></tr>`).join('')}</tbody></table></div>`;
+  }
+
+  $('table').addEventListener('click', (ev) => {
+    const b = ev.target.closest('button[data-del]'); if (!b) return;
+    if (b.dataset.armed !== '1'){ b.dataset.armed = '1'; b.textContent = '정말 삭제'; b.classList.add('warn'); setTimeout(() => { if (b.isConnected){ b.dataset.armed = ''; b.textContent = '삭제'; b.classList.remove('warn'); } }, 3000); return; }
+    const k = rows.findIndex(r => r._id === b.dataset.del);
+    if (k >= 0){ const [gone] = rows.splice(k, 1); if (!saveRows()) rows.splice(k, 0, gone); }
+    renderRecords();
+  });
+
+  function chart(data, series, unit, refLine){
+    const W = 640, H = 240, L = 64, R = 14, T = 18, B = 40;
+    const conv = (v) => v == null ? null : unit === 'min' ? v / 60 : v;
+    const vals = data.flatMap(r => series.map(s => conv(r[s.key]))).filter(v => v != null);
+    if (!vals.length) return '<div class="empty">아직 이 항목의 기록이 없어요.</div>';
+    const floor = unit === 'min' ? (refLine || 1) * 1.1 : unit === 'cnt' ? 3 : 10;
+    const rawMax = Math.max(...vals, floor);
+    const step = unit === 'cnt' ? Math.max(1, niceStep(rawMax / 4)) : niceStep(rawMax / 4);
+    const max = Math.ceil(rawMax / step) * step;
+    const n = data.length;
+    const x = (i) => n === 1 ? (L + W - R) / 2 : L + i * (W - L - R) / (n - 1);
+    const y = (v) => T + (H - T - B) * (1 - v / max);
+    const lab = (v) => unit === 'min' ? (+v.toFixed(1)) + '분' : unit === 'cnt' ? v + '회' : (v >= 60 ? fmt(v) : v + '초');
+    let g = '';
+    for (let v = 0; v <= max + 1e-9; v += step){
+      g += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/>`;
+      g += `<text x="${L - 8}" y="${y(v) + 4}" text-anchor="end">${lab(v)}</text>`;
+    }
+    if (refLine) g += `<line x1="${L}" x2="${W - R}" y1="${y(refLine)}" y2="${y(refLine)}" stroke="var(--warn)" stroke-width="1.5" stroke-dasharray="6 5"/><text x="${W - R}" y="${y(refLine) - 6}" text-anchor="end" style="fill:var(--warn)">목표 ${refLine}분</text>`;
+    const every = Math.max(1, Math.ceil(n / 8));
+    data.forEach((r, i) => { if (i % every === 0 || i === n - 1) g += `<text x="${x(i)}" y="${H - 12}" text-anchor="middle">${md(r.date)}</text>`; });
+    series.forEach(s => {
+      const pts = data.map((r, i) => ({ i, v: conv(r[s.key]) })).filter(p => p.v != null);
+      if (pts.length > 1) g += `<polyline fill="none" stroke="${s.color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" points="${pts.map(p => `${x(p.i)},${y(p.v)}`).join(' ')}"/>`;
+      pts.forEach((p, k) => { const lastPt = k === pts.length - 1; g += `<circle cx="${x(p.i)}" cy="${y(p.v)}" r="${lastPt ? 5 : 3.5}" fill="${lastPt ? s.color : 'var(--surface)'}" stroke="${s.color}" stroke-width="2"/>`; });
+    });
+    return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="기록 그래프">${g}</svg>`;
+  }
+  function niceStep(s){ const p = Math.pow(10, Math.floor(Math.log10(s))); const f = s / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p; }
+
+  renderRecords();
+})();
+</script>
+</body>
+</html>
